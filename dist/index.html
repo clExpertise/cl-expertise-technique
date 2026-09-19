@@ -18,7 +18,7 @@
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
     <nav id="nav" aria-label="Navigation principale">
       <a href="#expertise">Expertise</a>
-      <a href="#missions">Missions</a>
+      <a href="#missions">Catalogue</a>
       <a href="#parcours">Parcours</a>
       <a class="nav-cta" href="#contact">Parler de votre besoin</a>
     </nav>
@@ -28,7 +28,7 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-grid">
         <div class="hero-copy reveal">
-          <p class="eyebrow">Direction technique · Sécurité · Patrimoine</p>
+          <p class="eyebrow">Direction technique · Sécurité · Patrimoine · Immobilier</p>
           <h1 id="hero-title">Vos décisions techniques, <span>éclairées et sécurisées.</span></h1>
           <p class="lead">J’accompagne les directions, propriétaires et exploitants avec un regard indépendant, expérimenté et directement opérationnel.</p>
           <div class="hero-actions">
@@ -75,9 +75,9 @@
 
     <section class="section missions" id="missions">
       <div class="section-heading reveal">
-        <p class="eyebrow">15 missions ciblées</p>
+        <p class="eyebrow">Catalogue · 30 prestations</p>
         <h2>Une réponse précise à chaque enjeu technique.</h2>
-        <p>Sélection issue du catalogue de prestations. Chaque mission est adaptable à votre établissement et à votre niveau d’urgence.</p>
+        <p>Consultez les fiches détaillées. Chaque mission est adaptable à votre établissement et à votre niveau d’urgence.</p>
       </div>
       <div class="filters" role="group" aria-label="Filtrer les missions">
         <button class="filter active" data-filter="all">Toutes</button>
@@ -87,29 +87,9 @@
         <button class="filter" data-filter="securite">Sécurité</button>
         <button class="filter" data-filter="patrimoine">Patrimoine</button>
       </div>
-      <div class="mission-grid">
-        <article class="mission-card reveal" data-category="decision"><span>01 · Décision</span><h3>Second avis technique sur devis</h3><p>Cohérence, oublis, options, risques et leviers de négociation avant signature.</p><em>À distance · Forfait</em></article>
-        <article class="mission-card reveal" data-category="decision"><span>02 · Décision</span><h3>Contrôle de plusieurs devis</h3><p>Comparaison objective du périmètre, des quantités, exclusions et variantes.</p><em>À distance · Forfait</em></article>
-        <article class="mission-card reveal" data-category="decision"><span>03 · Décision</span><h3>Diagnostic technique ciblé</h3><p>Analyse d’une problématique affectant un bâtiment, un équipement ou l’exploitation.</p><em>½ journée / journée</em></article>
-
-        <article class="mission-card reveal" data-category="maintenance"><span>04 · Maintenance</span><h3>Audit de l’organisation maintenance</h3><p>Préventif, curatif, responsabilités, équipements, priorités et procédures.</p><em>1 journée</em></article>
-        <article class="mission-card reveal" data-category="maintenance"><span>05 · Maintenance</span><h3>Plan pluriannuel de maintenance</h3><p>Programme de maintenance et de renouvellement structuré sur trois à cinq ans.</p><em>Forfait</em></article>
-        <article class="mission-card reveal" data-category="maintenance"><span>06 · Maintenance</span><h3>Organisation technique multisites</h3><p>Rôles, circuits d’intervention, reporting et priorités entre établissements.</p><em>Forfait</em></article>
-
-        <article class="mission-card reveal" data-category="contrats"><span>07 · Contrats</span><h3>Audit d’un contrat de maintenance</h3><p>Périmètre, obligations, fréquences, délais, exclusions et conditions économiques.</p><em>À distance</em></article>
-        <article class="mission-card reveal" data-category="contrats"><span>08 · Contrats</span><h3>Mise en concurrence d’un prestataire</h3><p>Définition du besoin, critères de consultation, analyse des offres et aide au choix.</p><em>Forfait</em></article>
-        <article class="mission-card reveal" data-category="contrats"><span>09 · Contrats</span><h3>Optimisation des achats techniques</h3><p>Recherche de leviers d’économie sur les équipements, consommables et prestations.</p><em>À distance / sur site</em></article>
-
-        <article class="mission-card reveal" data-category="securite"><span>10 · Sécurité</span><h3>Audit de conformité ERP express</h3><p>Contrôles réglementaires, observations, écarts et actions prioritaires.</p><em>½ journée / journée</em></article>
-        <article class="mission-card reveal" data-category="securite"><span>11 · Sécurité</span><h3>Préparation d’une commission</h3><p>Revue documentaire et traitement des points sensibles avant la commission de sécurité.</p><em>Forfait</em></article>
-        <article class="mission-card reveal" data-category="securite"><span>12 · Sécurité</span><h3>Plan d’actions sécurité incendie</h3><p>Écarts, actions correctives, responsables, échéances et niveaux de priorité.</p><em>À distance</em></article>
-
-        <article class="mission-card reveal" data-category="patrimoine"><span>13 · Patrimoine</span><h3>Audit avant acquisition</h3><p>Regard indépendant avant acquisition ou prise à bail d’un hôtel, ERP ou patrimoine.</p><em>½ journée / journée</em></article>
-        <article class="mission-card reveal" data-category="patrimoine"><span>14 · Patrimoine</span><h3>Plan CAPEX & investissements</h3><p>Identification, hiérarchisation et programmation des investissements techniques.</p><em>Forfait</em></article>
-        <article class="mission-card reveal" data-category="patrimoine"><span>15 · Patrimoine</span><h3>Appui à la gestion d’un sinistre</h3><p>Coordination technique avec experts, assureurs et entreprises jusqu’à la reprise.</p><em>Forfait</em></article>
-      </div>
+      <div class="mission-grid" id="catalogue-grid" aria-live="polite"></div>
       <div class="missions-cta reveal">
-        <p>Vous ne trouvez pas exactement votre besoin ? Le catalogue complet compte 30 prestations.</p>
+        <p>Vous ne trouvez pas exactement votre besoin ? Décrivez votre situation, la mission sera cadrée sur mesure.</p>
         <a href="#contact">Décrivez-moi votre situation <span aria-hidden="true">↗</span></a>
       </div>
     </section>
@@ -150,6 +130,55 @@
     <p>SIRET 753 487 131 00025 · Bordeaux / Gironde</p>
     <a href="#accueil">Retour en haut ↑</a>
   </footer>
+
+  <dialog class="mission-dialog" id="mission-dialog" aria-labelledby="mission-dialog-title">
+    <button class="dialog-close" type="button" aria-label="Fermer">×</button>
+    <p class="eyebrow" id="mission-dialog-category"></p>
+    <h2 id="mission-dialog-title"></h2>
+    <p id="mission-dialog-description"></p>
+    <dl>
+      <div><dt>Format</dt><dd id="mission-dialog-format"></dd></div>
+      <div><dt>Livrable</dt><dd id="mission-dialog-deliverable"></dd></div>
+    </dl>
+    <a class="button primary" id="mission-dialog-contact" href="#contact">Demander cette mission</a>
+  </dialog>
+
+  <button class="support-launcher" id="support-launcher" type="button" aria-expanded="false" aria-controls="support-panel">
+    <span aria-hidden="true">✦</span> Support
+  </button>
+  <section class="support-panel" id="support-panel" aria-label="Assistant support" hidden>
+    <header>
+      <div><strong>Assistant CL</strong><small>Réponse immédiate ou transfert humain</small></div>
+      <button type="button" id="support-close" aria-label="Fermer le support">×</button>
+    </header>
+    <div class="support-messages" id="support-messages" role="log" aria-live="polite"></div>
+    <div class="support-typing" id="support-typing" hidden>Assistant en train d’écrire…</div>
+    <form class="support-form" id="support-form">
+      <label class="sr-only" for="support-input">Votre message</label>
+      <textarea id="support-input" rows="2" maxlength="1200" placeholder="Décrivez votre besoin…" required></textarea>
+      <button type="submit" aria-label="Envoyer">Envoyer</button>
+    </form>
+    <p class="support-privacy">Vos messages servent uniquement à traiter votre demande. <button type="button" id="support-ticket">Créer un ticket</button></p>
+  </section>
+
+  <dialog class="ticket-dialog" id="ticket-dialog" aria-labelledby="ticket-title">
+    <button class="dialog-close" type="button" aria-label="Fermer">×</button>
+    <h2 id="ticket-title">Transmettre au support humain</h2>
+    <p>Votre adresse e-mail sera utilisée uniquement pour répondre à cette demande.</p>
+    <form id="ticket-form">
+      <label>Prénom ou pseudo<input name="name" maxlength="80" required></label>
+      <label>Adresse e-mail<input name="email" type="email" maxlength="160" required></label>
+      <label>Référence éventuelle<input name="reference" maxlength="80"></label>
+      <label>Description<textarea name="description" maxlength="2000" rows="4" required></textarea></label>
+      <div id="turnstile-container"></div>
+      <button class="button primary" type="submit">Créer le ticket</button>
+      <p class="form-status" id="ticket-status" role="status"></p>
+    </form>
+  </dialog>
+
+  <script src="config.js"></script>
+  <script src="catalogue.js"></script>
   <script src="script.js"></script>
+  <script src="support.js"></script>
 </body>
 </html>

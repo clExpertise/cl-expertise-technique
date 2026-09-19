@@ -1,0 +1,14 @@
+{
+  "name": "cl-expertise-support",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev:worker": "wrangler dev --config worker/wrangler.jsonc",
+    "deploy:worker": "wrangler deploy --config worker/wrangler.jsonc",
+    "db:local": "wrangler d1 execute cl-support-db --local --file worker/migrations/0001_init.sql --config worker/wrangler.jsonc",
+    "db:remote": "wrangler d1 execute cl-support-db --remote --file worker/migrations/0001_init.sql --config worker/wrangler.jsonc"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}

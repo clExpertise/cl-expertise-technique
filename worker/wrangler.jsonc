@@ -1,0 +1,26 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "cl-support-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "limits": { "cpu_ms": 10 },
+  "triggers": { "crons": ["17 3 * * *"] },
+  "ai": { "binding": "AI" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cl-support-db",
+      "database_id": "REMPLACER_PAR_ID_D1"
+    }
+  ],
+  "vars": {
+    "SITE_NAME": "CL Expertise Technique",
+    "FRONTEND_ORIGIN": "https://www.cl-expertise-technique.fr",
+    "AI_MODEL": "@cf/meta/llama-3.2-1b-instruct",
+    "SUPPORT_EMAIL": "cl.expertise.technique@gmail.com",
+    "FROM_EMAIL": "Support CL <support@cl-expertise-technique.fr>",
+    "MAX_HISTORY": "10",
+    "RETENTION_DAYS": "180"
+  }
+}
