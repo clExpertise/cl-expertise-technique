@@ -177,7 +177,8 @@ async function sendTicketEmail(env,t){
     const conversation=t.history.map((m)=>`${m.role==='user'?'Utilisateur':'Assistant'} : ${m.content}`).join('\n\n')||'Aucun historique.';
     const html=`<div style="font-family:Arial,sans-serif;max-width:700px"><h2>Nouveau ticket support</h2><p><b>Numéro :</b> ${escapeHtml(t.ticketNumber)}</p><p><b>Nom :</b> ${escapeHtml(t.name)}</p><p><b>E-mail :</b> ${escapeHtml(t.email)}</p><p><b>Référence :</b> ${escapeHtml(t.reference||'—')}</p><p><b>Catégorie :</b> ${escapeHtml(t.category)}</p><p><b>Priorité :</b> ${escapeHtml(t.priority)}</p><p><b>Résumé :</b> ${escapeHtml(t.summary)}</p><p><b>Message :</b><br>${escapeHtml(t.description)}</p><p><b>Historique :</b></p><pre style="white-space:pre-wrap;background:#f3f5f7;padding:16px">${escapeHtml(conversation)}</pre><p><b>Date :</b> ${escapeHtml(t.now)}</p>`;
     const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({from:env.FROM_EMAIL,to:[env.SUPPORT_EMAIL],reply_to:t.email,subject:`[Nouveau ticket support] ${t.ticketNumber} - ${t.category}`,html})});
-    return response.ok;
+    if(!response.ok){console.error('Resend rejected email',{status:response.status,body:(await response.text()).slice(0,800)});return false}
+    return true;
   }catch(error){console.error('Email unavailable',error);return false}
 }
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
