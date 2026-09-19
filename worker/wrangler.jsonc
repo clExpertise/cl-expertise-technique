@@ -17,7 +17,7 @@
     "SITE_NAME": "CL Expertise Technique",
     "FRONTEND_ORIGIN": "https://www.cl-expertise-technique.fr",
     "AI_MODEL": "@cf/meta/llama-3.2-1b-instruct",
-    "SUPPORT_EMAIL": "cl.expertise.technique@gmail.com",
+    "SUPPORT_EMAIL": "tomdevprofr@gmail.com",
     "FROM_EMAIL": "Support CL <support@cl-expertise-technique.fr>",
     "MAX_HISTORY": "10",
     "RETENTION_DAYS": "180"
