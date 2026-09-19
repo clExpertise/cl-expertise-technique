@@ -73,6 +73,8 @@ Ne jamais placer ces trois valeurs dans `dist/config.js`.
 npm run deploy:worker
 ```
 
+Le forfait gratuit applique automatiquement sa limite CPU. Ne pas ajouter de bloc `limits.cpu_ms` dans `worker/wrangler.jsonc`, car la personnalisation de cette limite est réservée à l’offre payante.
+
 Cloudflare renvoie une adresse du type `https://cl-support-api.xxxxx.workers.dev`. La reporter dans `dist/config.js`, propriété `API_URL`. Reporter uniquement la clé **publique** Turnstile dans `TURNSTILE_SITE_KEY`, puis passer `SUPPORT_ENABLED` à `true`. Le widget reste volontairement masqué tant que cette activation n’est pas terminée, afin de ne jamais afficher un support cassé sur le site public.
 
 Vérifier ensuite :

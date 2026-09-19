@@ -4,14 +4,13 @@
   "main": "src/index.js",
   "compatibility_date": "2026-09-01",
   "workers_dev": true,
-  "limits": { "cpu_ms": 10 },
   "triggers": { "crons": ["17 3 * * *"] },
   "ai": { "binding": "AI" },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "cl-support-db",
-      "database_id": "REMPLACER_PAR_ID_D1"
+      "database_id": "ed6442d3-8fea-4a3b-a160-449ce6d747f6"
     }
   ],
   "vars": {
