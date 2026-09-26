@@ -1,5 +1,84 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#090e34"><title>Statistiques privées | CL Expertise Technique</title><link rel="stylesheet" href="styles.css"></head><body class="stats-body">
-<main class="stats-shell"><header class="stats-header"><a href="index.html"><img src="assets/logo-cl-expertise.png" alt="CL Expertise Technique"></a><div><p class="eyebrow">Espace privé</p><h1>Audience du site</h1><p>Statistiques agrégées, sans publicité ni profilage.</p></div></header>
-<section class="stats-login" id="stats-login"><label>Clé administrateur<input id="stats-token" type="password" autocomplete="current-password" placeholder="Saisissez votre clé privée"></label><label>Période<select id="stats-days"><option value="7">7 jours</option><option value="30" selected>30 jours</option><option value="90">90 jours</option><option value="365">1 an</option></select></label><button class="button primary" id="stats-load" type="button">Afficher les statistiques</button><p id="stats-status" role="status"></p></section>
-<section id="stats-content" hidden><div class="stats-kpis"><article><span>Pages vues</span><strong id="total-views">0</strong></article><article><span>Visiteurs uniques estimés</span><strong id="total-visitors">0</strong></article><article><span>Pages suivies</span><strong id="total-pages">0</strong></article></div><div class="stats-grid"><section><h2>Évolution quotidienne</h2><div class="daily-chart" id="daily-chart"></div></section><section><h2>Pages les plus consultées</h2><div class="stats-table-wrap"><table><thead><tr><th>Page</th><th>Vues</th><th>Visiteurs</th></tr></thead><tbody id="pages-table"></tbody></table></div></section></div></section>
-</main><script src="site-config.js"></script><script src="analytics-admin.js"></script></body></html>
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#071126">
+  <title>Cockpit audience | CL Expertise Technique</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="statistiques.css">
+</head>
+<body class="stats-body">
+  <div class="stats-layout">
+    <aside class="stats-sidebar">
+      <a class="stats-brand" href="index.html" aria-label="Retour au site"><img src="assets/logo-cl-expertise.png" alt="CL Expertise Technique"></a>
+      <p class="sidebar-label">Pilotage</p>
+      <nav aria-label="Navigation du tableau">
+        <a class="active" href="#vue-ensemble"><span>◫</span>Vue d’ensemble</a>
+        <a href="#audience"><span>⌁</span>Audience</a>
+        <a href="#pages"><span>▤</span>Pages</a>
+        <a href="#acquisition"><span>↗</span>Acquisition</a>
+        <a href="#activite"><span>◉</span>Temps réel</a>
+      </nav>
+      <div class="sidebar-note"><span>Confidentiel</span><p>Aucun cookie publicitaire. Données détaillées conservées moins de 48 h.</p></div>
+      <a class="back-site" href="index.html">← Voir le site public</a>
+    </aside>
+
+    <main class="stats-main">
+      <header class="stats-topbar">
+        <div><p class="stats-kicker">CL Expertise Technique</p><h1>Cockpit audience</h1><p>Suivez la fréquentation et les contenus qui intéressent vos visiteurs.</p></div>
+        <div class="stats-actions">
+          <label>Période<select id="stats-days"><option value="7">7 jours</option><option value="30" selected>30 jours</option><option value="90">90 jours</option><option value="365">1 an</option></select></label>
+          <button class="stats-icon-button" id="stats-refresh" type="button" title="Actualiser" aria-label="Actualiser">↻</button>
+          <button class="stats-logout" id="stats-logout" type="button" hidden>Déconnexion</button>
+        </div>
+      </header>
+
+      <section class="stats-gate" id="stats-gate">
+        <div class="gate-glow"></div><div class="gate-icon">CL</div><p class="stats-kicker">Accès privé</p>
+        <h2>Vos statistiques, rien qu’à vous.</h2>
+        <p>Entrez votre clé administrateur. Elle reste uniquement dans cette session de navigateur.</p>
+        <form id="stats-login-form">
+          <label for="stats-token">Clé administrateur</label>
+          <div class="token-field"><input id="stats-token" type="password" autocomplete="current-password" placeholder="Votre clé privée" required><button id="toggle-token" type="button" aria-label="Afficher ou masquer la clé">Voir</button></div>
+          <button class="stats-primary" type="submit">Ouvrir le cockpit <span>→</span></button>
+        </form>
+        <p class="gate-status" id="stats-gate-status" role="status"></p>
+      </section>
+
+      <section class="stats-dashboard" id="stats-dashboard" hidden>
+        <div class="realtime-banner" id="vue-ensemble">
+          <div class="live-badge"><i></i>EN DIRECT</div>
+          <div><strong id="active-visitors">0</strong><span>visiteur actif sur les 5 dernières minutes</span></div>
+          <div><strong id="last-hour-views">0</strong><span>pages vues depuis une heure</span></div>
+          <p><span id="refresh-state">Actualisation automatique</span><time id="last-update">—</time></p>
+        </div>
+
+        <div class="stats-kpi-grid">
+          <article class="kpi-card accent-cyan"><div class="kpi-head"><span>Aujourd’hui</span><i>↗</i></div><strong id="today-views">0</strong><p>pages vues</p></article>
+          <article class="kpi-card accent-blue"><div class="kpi-head"><span>Aujourd’hui</span><i>◎</i></div><strong id="today-visitors">0</strong><p>visiteurs uniques</p></article>
+          <article class="kpi-card"><div class="kpi-head"><span>Période choisie</span><i>▦</i></div><strong id="total-views">0</strong><p>pages vues</p></article>
+          <article class="kpi-card"><div class="kpi-head"><span>Période choisie</span><i>◌</i></div><strong id="total-visitors">0</strong><p>visiteurs uniques / jour</p></article>
+        </div>
+
+        <section class="stats-panel trend-panel" id="audience"><div class="panel-heading"><div><p class="stats-kicker">Audience</p><h2>Évolution de la fréquentation</h2></div><div class="chart-legend"><span><i class="views-dot"></i>Pages vues</span><span><i class="visitors-dot"></i>Visiteurs</span></div></div><div class="chart-wrap"><svg id="trend-chart" role="img" aria-label="Évolution des pages vues et visiteurs"></svg></div></section>
+
+        <div class="stats-two-columns">
+          <section class="stats-panel" id="pages"><div class="panel-heading"><div><p class="stats-kicker">Contenus</p><h2>Pages les plus consultées</h2></div><span class="panel-chip" id="tracked-pages">0 page</span></div><div class="stats-table-wrap"><table><thead><tr><th>Page</th><th>Vues</th><th>Visiteurs</th><th>Part</th></tr></thead><tbody id="pages-table"></tbody></table></div></section>
+          <section class="stats-panel live-panel" id="activite"><div class="panel-heading"><div><p class="stats-kicker">Temps réel</p><h2>Dernières visites</h2></div><span class="pulse-dot" aria-label="Actualisation en direct"></span></div><div class="live-feed" id="live-feed"></div></section>
+        </div>
+
+        <section class="stats-panel hourly-panel"><div class="panel-heading"><div><p class="stats-kicker">Dernières 24 heures</p><h2>Rythme des visites</h2></div></div><div class="hourly-chart" id="hourly-chart"></div></section>
+
+        <div class="stats-three-columns" id="acquisition">
+          <section class="stats-panel compact-panel"><div class="panel-heading"><div><p class="stats-kicker">Acquisition</p><h2>Sources</h2></div></div><div class="rank-list" id="sources-list"></div></section>
+          <section class="stats-panel compact-panel"><div class="panel-heading"><div><p class="stats-kicker">Technologie</p><h2>Appareils</h2></div></div><div class="rank-list" id="devices-list"></div></section>
+          <section class="stats-panel compact-panel"><div class="panel-heading"><div><p class="stats-kicker">Géographie</p><h2>Pays</h2></div></div><div class="rank-list" id="countries-list"></div></section>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="site-config.js"></script><script src="analytics-admin.js"></script>
+</body>
+</html>

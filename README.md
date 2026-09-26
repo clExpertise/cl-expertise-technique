@@ -77,6 +77,7 @@ Pour une installation existante, appliquer aussi la migration des statistiques :
 
 ```powershell
 pnpm exec wrangler d1 execute cl-support-db --remote --file worker/migrations/0002_analytics.sql --config worker/wrangler.jsonc
+pnpm exec wrangler d1 execute cl-support-db --remote --file worker/migrations/0003_realtime_analytics.sql --config worker/wrangler.jsonc
 ```
 
 Cloudflare renvoie une adresse du type `https://cl-support-api.xxxxx.workers.dev`. La reporter dans `dist/config.js`, propriété `API_URL`. Reporter uniquement la clé **publique** Turnstile dans `TURNSTILE_SITE_KEY`, puis passer `SUPPORT_ENABLED` à `true`. Le widget reste volontairement masqué tant que cette activation n’est pas terminée, afin de ne jamais afficher un support cassé sur le site public.
@@ -103,7 +104,7 @@ La configuration publique de l’expéditeur est centralisée dans `worker/wrang
 
 ## 5. Statistiques d’audience
 
-Le tableau privé se trouve à `/statistiques.html`. Il affiche les pages vues, les visiteurs uniques journaliers estimés, l’évolution quotidienne et le détail de chaque page sur 7, 30, 90 ou 365 jours.
+Le tableau privé se trouve à `/statistiques.html`. Il s’actualise automatiquement toutes les 5 secondes et affiche les visiteurs actifs, les vues de l’heure et du jour, l’évolution, les pages, les sources, les appareils, les pays et les dernières visites. L’historique global reste disponible sur 7, 30, 90 ou 365 jours.
 
 Utiliser la même valeur secrète `ADMIN_TOKEN` que pour l’administration. Elle n’est jamais intégrée au site : elle est saisie dans le tableau et conservée seulement pendant la session du navigateur.
 
@@ -112,7 +113,7 @@ Le suivi :
 - n’utilise aucun cookie ;
 - ne crée aucun profil publicitaire ;
 - ne conserve pas l’adresse IP brute ;
-- supprime les identifiants pseudonymisés après 2 jours ;
+- supprime les événements détaillés et identifiants pseudonymisés sous 48 heures ;
 - conserve les totaux agrégés au maximum 25 mois.
 
 ## 6. Administration des tickets (backend conservé)

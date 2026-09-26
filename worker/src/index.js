@@ -35,6 +35,7 @@ export default {
     const analyticsDays = Math.max(30, Number(env.ANALYTICS_RETENTION_DAYS || 762));
     await env.DB.prepare("DELETE FROM analytics_visitors WHERE visit_date < date('now','-2 day')").run();
     await env.DB.prepare("DELETE FROM analytics_daily WHERE visit_date < date('now', ?)").bind(`-${analyticsDays} day`).run();
+    await env.DB.prepare("DELETE FROM analytics_events WHERE datetime(visited_at) < datetime('now','-2 days')").run();
   }
 };
 
@@ -45,15 +46,21 @@ async function recordAnalyticsHit(request, env, cors) {
   const date = new Date().toISOString().slice(0, 10);
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   const agent = (request.headers.get('User-Agent') || '').slice(0, 240);
+  if (/bot|spider|crawler|slurp|bingpreview|facebookexternalhit|headless/i.test(agent)) return json({ok:true,ignored:true}, 202, cors);
   const salt = env.ANALYTICS_SALT || env.ADMIN_TOKEN || 'cl-audience';
   const visitorHash = await hashValue(`${salt}|${date}|${ip}|${agent}`);
+  const visitedAt = new Date().toISOString();
+  const source = normalizeAnalyticsSource(body.source, env.FRONTEND_ORIGIN);
+  const device = detectDevice(agent);
+  const country = /^[A-Z]{2}$/.test(String(request.cf?.country || '')) ? request.cf.country : '—';
   const unique = await env.DB.prepare('INSERT OR IGNORE INTO analytics_visitors (visit_date,page,visitor_hash) VALUES (?,?,?)').bind(date,page,visitorHash).run();
   const siteUnique = await env.DB.prepare('INSERT OR IGNORE INTO analytics_visitors (visit_date,page,visitor_hash) VALUES (?,?,?)').bind(date,'__site__',visitorHash).run();
   const isNew = Number(unique.meta?.changes || 0) > 0 ? 1 : 0;
   const isNewOnSite = Number(siteUnique.meta?.changes || 0) > 0 ? 1 : 0;
   await env.DB.batch([
     env.DB.prepare(`INSERT INTO analytics_daily (visit_date,page,views,unique_visitors) VALUES (?,?,1,?) ON CONFLICT(visit_date,page) DO UPDATE SET views=views+1, unique_visitors=unique_visitors+excluded.unique_visitors`).bind(date,page,isNew),
-    env.DB.prepare(`INSERT INTO analytics_daily (visit_date,page,views,unique_visitors) VALUES (?,?,1,?) ON CONFLICT(visit_date,page) DO UPDATE SET views=views+1, unique_visitors=unique_visitors+excluded.unique_visitors`).bind(date,'__site__',isNewOnSite)
+    env.DB.prepare(`INSERT INTO analytics_daily (visit_date,page,views,unique_visitors) VALUES (?,?,1,?) ON CONFLICT(visit_date,page) DO UPDATE SET views=views+1, unique_visitors=unique_visitors+excluded.unique_visitors`).bind(date,'__site__',isNewOnSite),
+    env.DB.prepare('INSERT INTO analytics_events (visited_at,page,visitor_hash,source,device,country) VALUES (?,?,?,?,?,?)').bind(visitedAt,page,visitorHash,source,device,country)
   ]);
   return json({ok:true}, 202, cors);
 }
@@ -62,12 +69,29 @@ async function analyticsReport(request, env, url, cors) {
   if (!env.ADMIN_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return json({error:'Accès refusé'}, 401, cors);
   const days = Math.min(365, Math.max(7, Number(url.searchParams.get('days') || 30)));
   const since = `-${days - 1} day`;
-  const [summary,pages,daily] = await env.DB.batch([
+  const [summary,pages,daily,today,active,lastHour,hourly,sources,devices,countries,recent] = await env.DB.batch([
     env.DB.prepare(`SELECT COALESCE(SUM(views),0) views, COALESCE(SUM(unique_visitors),0) unique_visitors FROM analytics_daily WHERE page='__site__' AND visit_date >= date('now', ?)`).bind(since),
     env.DB.prepare(`SELECT page, SUM(views) views, SUM(unique_visitors) unique_visitors FROM analytics_daily WHERE page!='__site__' AND visit_date >= date('now', ?) GROUP BY page ORDER BY views DESC LIMIT 100`).bind(since),
-    env.DB.prepare(`SELECT visit_date date, views, unique_visitors FROM analytics_daily WHERE page='__site__' AND visit_date >= date('now', ?) ORDER BY visit_date`).bind(since)
+    env.DB.prepare(`SELECT visit_date date, views, unique_visitors FROM analytics_daily WHERE page='__site__' AND visit_date >= date('now', ?) ORDER BY visit_date`).bind(since),
+    env.DB.prepare(`SELECT COALESCE(views,0) views, COALESCE(unique_visitors,0) unique_visitors FROM analytics_daily WHERE page='__site__' AND visit_date=date('now')`),
+    env.DB.prepare(`SELECT COUNT(DISTINCT visitor_hash) active_visitors FROM analytics_events WHERE datetime(visited_at) >= datetime('now','-5 minutes')`),
+    env.DB.prepare(`SELECT COUNT(*) views FROM analytics_events WHERE datetime(visited_at) >= datetime('now','-1 hour')`),
+    env.DB.prepare(`SELECT strftime('%Y-%m-%dT%H:00:00Z',visited_at) hour, COUNT(*) views, COUNT(DISTINCT visitor_hash) visitors FROM analytics_events WHERE datetime(visited_at) >= datetime('now','-24 hours') GROUP BY hour ORDER BY hour`),
+    env.DB.prepare(`SELECT source label, COUNT(*) value FROM analytics_events WHERE datetime(visited_at) >= datetime('now','-2 days') GROUP BY source ORDER BY value DESC LIMIT 8`),
+    env.DB.prepare(`SELECT device label, COUNT(*) value FROM analytics_events WHERE datetime(visited_at) >= datetime('now','-2 days') GROUP BY device ORDER BY value DESC`),
+    env.DB.prepare(`SELECT country label, COUNT(*) value FROM analytics_events WHERE datetime(visited_at) >= datetime('now','-2 days') GROUP BY country ORDER BY value DESC LIMIT 8`),
+    env.DB.prepare(`SELECT visited_at,page,source,device,country FROM analytics_events ORDER BY visited_at DESC LIMIT 30`)
   ]);
-  return json({periodDays:days,totals:summary.results?.[0]||{views:0,unique_visitors:0},pages:pages.results||[],daily:daily.results||[]}, 200, cors);
+  return json({
+    generatedAt:new Date().toISOString(),
+    periodDays:days,
+    totals:summary.results?.[0]||{views:0,unique_visitors:0},
+    today:today.results?.[0]||{views:0,unique_visitors:0},
+    activeVisitors:Number(active.results?.[0]?.active_visitors||0),
+    lastHourViews:Number(lastHour.results?.[0]?.views||0),
+    pages:pages.results||[],daily:daily.results||[],hourly:hourly.results||[],
+    sources:sources.results||[],devices:devices.results||[],countries:countries.results||[],recent:recent.results||[]
+  }, 200, cors);
 }
 
 function normalizeAnalyticsPage(value) {
@@ -79,6 +103,20 @@ function normalizeAnalyticsPage(value) {
 async function hashValue(value) {
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));
   return [...new Uint8Array(digest)].map((b)=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function normalizeAnalyticsSource(value, frontendOrigin) {
+  const raw=String(value||'').trim().toLowerCase().slice(0,120);
+  if(!raw)return'Direct';
+  const cleanHost=raw.replace(/^www\./,'');
+  try{const own=new URL(frontendOrigin).hostname.toLowerCase().replace(/^www\./,'');if(cleanHost===own)return'Interne'}catch{}
+  return /^[a-z0-9.-]+$/.test(cleanHost)?cleanHost:'Direct';
+}
+
+function detectDevice(agent) {
+  if(/ipad|tablet|kindle|silk/i.test(agent))return'Tablette';
+  if(/mobi|iphone|android/i.test(agent))return'Mobile';
+  return'Ordinateur';
 }
 
 async function chat(request, env, cors) {
