@@ -12,11 +12,13 @@ export default {
     const origin = request.headers.get('Origin') || '';
     const cors = corsHeaders(origin, env.FRONTEND_ORIGIN);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
-    if (origin && origin !== env.FRONTEND_ORIGIN && !origin.startsWith('http://localhost:')) return json({error:'Origine refusée'}, 403, cors);
+    if (origin && origin !== env.FRONTEND_ORIGIN && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return json({error:'Origine refusée'}, 403, cors);
 
     const url = new URL(request.url);
     try {
       if (url.pathname === '/api/health' && request.method === 'GET') return json({ok:true,service:'CL Support'}, 200, cors);
+      if (url.pathname === '/api/analytics/hit' && request.method === 'POST') return recordAnalyticsHit(request, env, cors);
+      if (url.pathname === '/api/admin/analytics' && request.method === 'GET') return analyticsReport(request, env, url, cors);
       if (url.pathname === '/api/chat' && request.method === 'POST') return chat(request, env, cors);
       if (url.pathname === '/api/tickets' && request.method === 'POST') return createTicket(request, env, cors);
       if (url.pathname.startsWith('/api/admin/')) return admin(request, env, url, cors);
@@ -30,8 +32,54 @@ export default {
     const days = Math.max(30, Number(env.RETENTION_DAYS || 180));
     await env.DB.prepare("DELETE FROM tickets WHERE created_at < datetime('now', ?)").bind(`-${days} days`).run();
     await env.DB.prepare("DELETE FROM rate_limits WHERE bucket < strftime('%Y-%m-%dT%H:%M','now','-2 days')").run();
+    const analyticsDays = Math.max(30, Number(env.ANALYTICS_RETENTION_DAYS || 762));
+    await env.DB.prepare("DELETE FROM analytics_visitors WHERE visit_date < date('now','-2 day')").run();
+    await env.DB.prepare("DELETE FROM analytics_daily WHERE visit_date < date('now', ?)").bind(`-${analyticsDays} day`).run();
   }
 };
+
+async function recordAnalyticsHit(request, env, cors) {
+  const body = await safeJson(request);
+  const page = normalizeAnalyticsPage(body.page);
+  if (!page) return json({error:'Page invalide'}, 400, cors);
+  const date = new Date().toISOString().slice(0, 10);
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const agent = (request.headers.get('User-Agent') || '').slice(0, 240);
+  const salt = env.ANALYTICS_SALT || env.ADMIN_TOKEN || 'cl-audience';
+  const visitorHash = await hashValue(`${salt}|${date}|${ip}|${agent}`);
+  const unique = await env.DB.prepare('INSERT OR IGNORE INTO analytics_visitors (visit_date,page,visitor_hash) VALUES (?,?,?)').bind(date,page,visitorHash).run();
+  const siteUnique = await env.DB.prepare('INSERT OR IGNORE INTO analytics_visitors (visit_date,page,visitor_hash) VALUES (?,?,?)').bind(date,'__site__',visitorHash).run();
+  const isNew = Number(unique.meta?.changes || 0) > 0 ? 1 : 0;
+  const isNewOnSite = Number(siteUnique.meta?.changes || 0) > 0 ? 1 : 0;
+  await env.DB.batch([
+    env.DB.prepare(`INSERT INTO analytics_daily (visit_date,page,views,unique_visitors) VALUES (?,?,1,?) ON CONFLICT(visit_date,page) DO UPDATE SET views=views+1, unique_visitors=unique_visitors+excluded.unique_visitors`).bind(date,page,isNew),
+    env.DB.prepare(`INSERT INTO analytics_daily (visit_date,page,views,unique_visitors) VALUES (?,?,1,?) ON CONFLICT(visit_date,page) DO UPDATE SET views=views+1, unique_visitors=unique_visitors+excluded.unique_visitors`).bind(date,'__site__',isNewOnSite)
+  ]);
+  return json({ok:true}, 202, cors);
+}
+
+async function analyticsReport(request, env, url, cors) {
+  if (!env.ADMIN_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return json({error:'Accès refusé'}, 401, cors);
+  const days = Math.min(365, Math.max(7, Number(url.searchParams.get('days') || 30)));
+  const since = `-${days - 1} day`;
+  const [summary,pages,daily] = await env.DB.batch([
+    env.DB.prepare(`SELECT COALESCE(SUM(views),0) views, COALESCE(SUM(unique_visitors),0) unique_visitors FROM analytics_daily WHERE page='__site__' AND visit_date >= date('now', ?)`).bind(since),
+    env.DB.prepare(`SELECT page, SUM(views) views, SUM(unique_visitors) unique_visitors FROM analytics_daily WHERE page!='__site__' AND visit_date >= date('now', ?) GROUP BY page ORDER BY views DESC LIMIT 100`).bind(since),
+    env.DB.prepare(`SELECT visit_date date, views, unique_visitors FROM analytics_daily WHERE page='__site__' AND visit_date >= date('now', ?) ORDER BY visit_date`).bind(since)
+  ]);
+  return json({periodDays:days,totals:summary.results?.[0]||{views:0,unique_visitors:0},pages:pages.results||[],daily:daily.results||[]}, 200, cors);
+}
+
+function normalizeAnalyticsPage(value) {
+  const raw=String(value||'').trim().slice(0,160);
+  if(!raw.startsWith('/')||raw.includes('..')||/[<>"']/.test(raw))return'';
+  return raw.split('?')[0].split('#')[0]||'/';
+}
+
+async function hashValue(value) {
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));
+  return [...new Uint8Array(digest)].map((b)=>b.toString(16).padStart(2,'0')).join('');
+}
 
 async function chat(request, env, cors) {
   const limited = await rateLimit(request, env, 'chat', 12);
@@ -155,7 +203,7 @@ function validEmail(value){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)}
 async function safeJson(request){try{return await request.json()}catch{return {}}}
 function safeTicket(t){return {...t,conversation:JSON.parse(t.conversation||'[]')}}
 function json(data,status,headers){return new Response(JSON.stringify(data),{status,headers:{...headers,'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}})}
-function corsHeaders(origin,allowed){const resolved=origin===allowed||origin.startsWith('http://localhost:')?origin:allowed;return {'Access-Control-Allow-Origin':resolved,'Vary':'Origin','Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'GET,POST,PATCH,DELETE,OPTIONS'}}
+function corsHeaders(origin,allowed){const local=/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);const resolved=origin===allowed||local?origin:allowed;return {'Access-Control-Allow-Origin':resolved,'Vary':'Origin','Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'GET,POST,PATCH,DELETE,OPTIONS'}}
 
 async function rateLimit(request,env,endpoint,limit){
   const ip=request.headers.get('CF-Connecting-IP')||'unknown';

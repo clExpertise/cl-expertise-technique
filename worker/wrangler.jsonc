@@ -20,6 +20,7 @@
     "SUPPORT_EMAIL": "cl.expertise.technique@gmail.com",
     "FROM_EMAIL": "Support CL <support@cl-expertise-technique.fr>",
     "MAX_HISTORY": "10",
-    "RETENTION_DAYS": "180"
+    "RETENTION_DAYS": "180",
+    "ANALYTICS_RETENTION_DAYS": "762"
   }
 }

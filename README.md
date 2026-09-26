@@ -1,6 +1,6 @@
 # CL Expertise Technique
 
-Site vitrine statique de Christian Linossier et système de support IA. Le frontend reste sur GitHub Pages ; l’API, l’IA et les tickets sont hébergés sur l’offre gratuite Cloudflare Workers.
+Site vitrine statique de Christian Linossier, pages métier dédiées au référencement et mesure d’audience interne. Le frontend reste sur GitHub Pages ; les statistiques agrégées sont traitées par l’offre gratuite Cloudflare Workers et stockées dans D1.
 
 ## Publication sur GitHub Pages
 
@@ -15,16 +15,14 @@ L’adresse publique apparaîtra dans le résumé du workflow puis dans **Settin
 
 Le site ne nécessite ni compilation ni dépendance. Ouvrez `dist/index.html` pour une consultation locale.
 
-## Architecture du support
+## Architecture
 
 ```text
 GitHub Pages (dist/)
-  └── widget de chat + administration
+  ├── accueil + pages métier SEO
+  └── mesure d’audience sans cookie
         └── Cloudflare Worker (worker/)
-              ├── Workers AI : réponses assistées
-              ├── D1 : tickets et limitation anti-spam
-              ├── Turnstile : CAPTCHA facultatif
-              └── Resend : notification e-mail
+              └── D1 : vues et visiteurs uniques journaliers
 ```
 
 Les secrets ne sont jamais présents dans `dist/`. Ils sont enregistrés exclusivement dans Cloudflare ou dans les secrets GitHub Actions.
@@ -75,6 +73,12 @@ npm run deploy:worker
 
 Le forfait gratuit applique automatiquement sa limite CPU. Ne pas ajouter de bloc `limits.cpu_ms` dans `worker/wrangler.jsonc`, car la personnalisation de cette limite est réservée à l’offre payante.
 
+Pour une installation existante, appliquer aussi la migration des statistiques :
+
+```powershell
+pnpm exec wrangler d1 execute cl-support-db --remote --file worker/migrations/0002_analytics.sql --config worker/wrangler.jsonc
+```
+
 Cloudflare renvoie une adresse du type `https://cl-support-api.xxxxx.workers.dev`. La reporter dans `dist/config.js`, propriété `API_URL`. Reporter uniquement la clé **publique** Turnstile dans `TURNSTILE_SITE_KEY`, puis passer `SUPPORT_ENABLED` à `true`. Le widget reste volontairement masqué tant que cette activation n’est pas terminée, afin de ne jamais afficher un support cassé sur le site public.
 
 Vérifier ensuite :
@@ -97,11 +101,25 @@ La configuration publique de l’expéditeur est centralisée dans `worker/wrang
 - `AI_MODEL` : modèle Workers AI ;
 - `RETENTION_DAYS` : suppression automatique des anciens tickets.
 
-## 5. Administration
+## 5. Statistiques d’audience
+
+Le tableau privé se trouve à `/statistiques.html`. Il affiche les pages vues, les visiteurs uniques journaliers estimés, l’évolution quotidienne et le détail de chaque page sur 7, 30, 90 ou 365 jours.
+
+Utiliser la même valeur secrète `ADMIN_TOKEN` que pour l’administration. Elle n’est jamais intégrée au site : elle est saisie dans le tableau et conservée seulement pendant la session du navigateur.
+
+Le suivi :
+
+- n’utilise aucun cookie ;
+- ne crée aucun profil publicitaire ;
+- ne conserve pas l’adresse IP brute ;
+- supprime les identifiants pseudonymisés après 2 jours ;
+- conserve les totaux agrégés au maximum 25 mois.
+
+## 6. Administration des tickets (backend conservé)
 
 L’interface se trouve à `/admin.html`. Elle demande `ADMIN_TOKEN` et permet de consulter, rechercher, classer et supprimer définitivement les tickets. Le jeton est conservé uniquement dans `sessionStorage` et disparaît à la fermeture de la session du navigateur.
 
-## 6. Déploiement assisté du Worker
+## 7. Déploiement assisté du Worker
 
 Le workflow manuel `.github/workflows/worker.yml` déploie le backend uniquement lorsque vous le lancez depuis l’onglet **Actions**, ce qui évite un déploiement incomplet avant la création de D1 et des secrets. Dans **GitHub → Settings → Secrets and variables → Actions**, créer :
 
@@ -110,7 +128,20 @@ Le workflow manuel `.github/workflows/worker.yml` déploie le backend uniquement
 
 Les secrets applicatifs `ADMIN_TOKEN`, `RESEND_API_KEY` et `TURNSTILE_SECRET` restent gérés directement par Cloudflare et ne sont pas nécessaires dans GitHub.
 
-## 7. Tests de recette
+## 8. Pages de référencement
+
+Le sitemap est disponible dans `dist/sitemap.xml`. Les pages métier sont :
+
+- `expertise-technique.html` ;
+- `conseil-technique-immobilier.html` ;
+- `audit-maintenance.html` ;
+- `securite-erp.html` ;
+- `expertise-technique-hotellerie.html` ;
+- `direction-technique-externalisee.html`.
+
+Chaque page répond à une intention précise et possède un titre, une description, une URL canonique et des liens internes. Éviter de dupliquer ces textes uniquement pour multiplier les mots-clés.
+
+## 9. Tests de recette
 
 1. Question simple : demander le téléphone → réponse automatique sans invention.
 2. Question inconnue : demander une information absente → proposition de transfert humain.
@@ -128,7 +159,8 @@ Les secrets applicatifs `ADMIN_TOKEN`, `RESEND_API_KEY` et `TURNSTILE_SECRET` re
 - Contenu : `dist/index.html`
 - Mise en forme : `dist/styles.css`
 - Interactions : `dist/script.js`
-- Support : `dist/support.js`
+- Suivi d’audience : `dist/analytics.js`
+- Tableau privé : `dist/statistiques.html`
 - Catalogue : `dist/catalogue.js`
 - Administration : `dist/admin.html`
 - Backend : `worker/src/index.js`

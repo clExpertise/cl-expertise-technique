@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /statistiques.html
+
+Sitemap: https://www.cl-expertise-technique.fr/sitemap.xml

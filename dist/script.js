@@ -1,14 +1,3 @@
-const menuButton = document.querySelector('.menu-toggle');
-const nav = document.querySelector('#nav');
-menuButton.addEventListener('click', () => {
-  const open = nav.classList.toggle('open');
-  menuButton.setAttribute('aria-expanded', String(open));
-});
-nav.addEventListener('click', () => {
-  nav.classList.remove('open');
-  menuButton.setAttribute('aria-expanded', 'false');
-});
-
 const catalogueGrid = document.querySelector('#catalogue-grid');
 const missionDialog = document.querySelector('#mission-dialog');
 const catalogue = window.CL_CATALOGUE || [];
@@ -47,13 +36,4 @@ document.querySelectorAll('.filter').forEach((button) => {
   });
 });
 
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-      observer.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.08 });
-document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
 renderCatalogue();
